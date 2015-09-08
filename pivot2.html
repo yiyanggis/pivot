@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link href="css/displayPhoto.css" rel="stylesheet">
+<link href="css/bootstrap.css" rel="stylesheet">
+<link href="css/ol.css" rel="stylesheet">
+<link href="css/ol3-layerswitcher.css" rel='stylesheet'>
+<link href="https://cdn.datatables.net/1.10.8/css/jquery.dataTables.min.css" rel='stylesheet'>
+<style>
+#pivot_para_tb tr{
+	margin-bottom: 10px;
+}
+
+#pivot_para_tb td{
+	padding: 5px;
+}
+
+#pivot_para_tb .unitTd{
+	text-align: left;
+}
+
+.ol-popup {
+    position: absolute;
+    background-color: white;
+    -webkit-filter: drop-shadow(0 1px 4px rgba(0,0,0,0.2));
+    filter: drop-shadow(0 1px 4px rgba(0,0,0,0.2));
+    padding: 15px;
+    border-radius: 10px;
+    border: 1px solid #cccccc;
+    bottom: 12px;
+    left: -50px;
+  }
+.ol-popup:after, .ol-popup:before {
+	top: 100%;
+	border: solid transparent;
+	content: " ";
+	height: 0;
+	width: 0;
+	position: absolute;
+	pointer-events: none;
+}
+.ol-popup:after {
+	border-top-color: white;
+	border-width: 10px;
+	left: 48px;
+	margin-left: -10px;
+}
+.ol-popup:before {
+	border-top-color: #cccccc;
+	border-width: 11px;
+	left: 48px;
+	margin-left: -11px;
+}
+.ol-popup-closer {
+	text-decoration: none;
+	position: absolute;
+	top: 2px;
+	right: 8px;
+}
+.ol-popup-closer:after {
+	content: "X";
+}
+
+</style>
+
+<script src="https://maps.googleapis.com/maps/api/js?v=3.exp&libraries=places"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.8/js/jquery.dataTables.min.js"></script>
+<script src="js/bootstrap.js"></script>
+<script src="http://openlayers.org/en/v3.2.1/build/ol.js"></script>
+<script src="js/ol3-layerswitcher.js"></script>
+<script src="geojsonhint.js"></script>
+<script src="GJV.js"></script>
+<script src="js/YY/esri.js"></script>
+<script src="pivot2.js"></script>
+<script src="YY.js"></script>
+<script src="util.js"></script>
+
+
+
+</head>
+
+<body>
+
+	<div class="container">
+		<div class="jumbotron">
+		    <h1>Add Pivot</h1> 
+		</div>
+
+		<div class="row">
+			<div class="col-md-6">
+				<div class="panel panel-default">
+				  <div class="panel-heading">Pivot Details</div>
+				  <div class="panel-body">
+				    <ul id="fieldDetailList">
+				    </ul>
+				  </div>
+				</div>
+			</div>
+
+			<div class="col-md-6">
+				<div class="panel panel-default">
+				  <div class="panel-heading">Pivot speed vs application depth relationship</div>
+				  <div class="panel-body">
+				  	<table>
+				  		<tr>
+				  			<td>
+				  				<span>Base Walk Speed (%)</span>
+				  				<input type="text" id="speedInput" readonly>
+				  			</td>
+
+				  			<td>
+				  				<span>Lock</span>
+				  				<input type="checkbox" id="lockCheck" checked>
+				  			</td>
+
+				  			<td>
+				  				<span>Base Application (in)</span>
+				  				<input type="text" id="appDeptInput">
+				  			</td>
+				  		</tr>
+				  	</table>
+				  </div>
+				</div>
+			</div>
+		</div>
+
+		<div id="tabs">
+
+		  <!-- Nav tabs -->
+		  <ul class="nav nav-tabs" role="tablist">
+		    <li role="presentation" class="active"><a href="#Geographic_Footprint" aria-controls="Geographic_Footprint" role="tab" data-toggle="tab">Geographic Footprint</a></li>
+		    <!--<li role="presentation"><a href="#Pivot_Essentials" aria-controls="Pivot_Essentials" role="tab" data-toggle="tab">Pivot Essentials</a></li>
+		    <li role="presentation"><a href="#Towers_Sprinklers" aria-controls="Towers_Sprinklers" role="tab" data-toggle="tab">Towers/Sprinklers</a></li>-->
+		    
+		  </ul>
+
+		  <!-- Tab panes -->
+		  <div class="tab-content">
+		    <div role="tabpanel" class="tab-pane fade in active" id="Geographic_Footprint">
+		    	<div class="row">
+				  <div class="col-md-6">
+				  	<div id="resultDiv" class="row" style="width: 100%;height: 600px;overflow-x: scroll;overflow-y:scroll">
+						<table id="resultTable" class="table table-bordered table-hover">
+							<thead>
+								
+								<td>
+									Start
+								</td>
+								<td>
+									Stop
+								</td>
+								<td>
+									Area(ac)
+								</td>
+								<td>
+									Application (Depth)
+								</td>
+								<td>
+									Speed(%)
+								</td>
+								<td>
+									Soil Type
+								</td>
+								<td>
+									AWC
+								</td>
+								<td>
+									Field Capacity
+								</td>
+								<td>
+									Wilting Point
+								</td>
+								<td>
+									Inches to Refill
+								</td>
+								<td>
+									Yield Goal
+								</td>
+								<td>
+									% Runoff
+								</td>
+							</thead>
+							<tbody>
+							</tbody>
+						</table>
+					</div>
+				  </div>
+
+				  <div class="col-md-6">
+				  	<div id="map" style="width: 100%;height: 600px;">
+				  		<div id="popup" class="ol-popup">
+			                <a href="#" id="popup-closer" class="ol-popup-closer"></a>
+			                <div id="popup-content"></div>
+			            </div>
+				  	</div>
+				  </div>
+
+				</div>
+
+				<hr>
+
+				<div class="row">
+					<div id="pivotSector">
+						<table style="float:right;">
+							<tr>
+								<td>
+									<span>Application (in) Min:</span><input id="appMinInput" type="text">
+								</td>
+								<td>
+									<span>Max:</span><input id="appMaxInput" type="text">
+								</td>
+								<td>
+									<span>Min sector size:</span>
+									<select id="degSelect">
+									  <option value="1">1</option>
+									  <option value="2">2</option>
+									  <option value="3">3</option>
+									  <option value="4">4</option>
+									  <option value="5">5</option>
+									  <option value="6">6</option>
+									</select>
+									<span>deg</span>
+								</td>
+							</tr>
+						</table>
+					</div>
+				</div>	
+		    </div>
+		    <!--<div role="tabpanel" class="tab-pane fade" id="Pivot_Essentials">
+		    	
+		    </div>
+		    <div role="tabpanel" class="tab-pane fade" id="Towers_Sprinklers">...</div>-->
+		    
+		  </div>
+
+	</div>
+
+</body>
+<script>
+
+var map;
+
+//var map2=initmap('map2');
+var mapStatus=null;
+var mapStatusMode={Draw:1,Identify:2,Null:null};
+
+ol.proj.AreaPerUnit={ACRE:4046.86};
+
+var vectorLayer,pivotLineLayer, roadAccessLayer;
+
+var soilLayer;
+
+var center;
+
+var circle;
+
+var circleFeature;
+
+var radius;
+
+var draw; // global so we can remove it later
+
+var circleVectorSource;
+
+var circleVectorLayer;
+
+var features;
+var featureOverlay;
+
+var modify;
+
+var sectorSource;
+
+var sectorLayer;
+
+var sectorDeg;
+
+var sectorArray=[];
+
+var featureArray=[];
+
+var featureCollection;
+
+var t;
+
+//addInteraction();
+
+var container = document.getElementById('popup');
+var content = document.getElementById('popup-content');
+var closer = document.getElementById('popup-closer');
+var overlay;
+
+//========================================pivot essential
+var ratioApp_Speed=30;
+var ratioSpeed_Time=2160;
+
+var baseSpeed,appDept,rotationTime;
+
+$(document).ready(function(){
+	center=[parseFloat(YY.Util.GetURLParameter('lng')),parseFloat(YY.Util.GetURLParameter('lat'))];
+	radius=parseFloat(YY.Util.GetURLParameter('r'));
+
+	//radius=(radius * ol.proj.METERS_PER_UNIT.ft)/ol.proj.METERS_PER_UNIT.degrees;
+
+	baseSpeed=parseFloat(YY.Util.GetURLParameter('speed'));
+	appDept=parseFloat(YY.Util.GetURLParameter('dept'));
+	rotationTime=parseFloat(YY.Util.GetURLParameter('time'));
+
+	$("#speedInput").val(baseSpeed);
+	$("#appDeptInput").val(appDept);
+	
+
+	map=initmap('map');
+	drawPivotCircle(map, radius, center[1],center[0]);
+	t = $('#resultTable').DataTable();
+});
+
+
+</script>
+</html>

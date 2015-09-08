@@ -1,0 +1,14 @@
+{
+	"name":"pivot1",
+	"definition":{
+		"lat":41.546,
+		"lng":-96.696,
+		"wettedRadius":7018,
+		"pivotLen":7018,
+		"startAngle":0,
+		"stopAngle":360,
+		"accessRoadAngle":-1,
+		"pivotNorthAngle":360,
+		"pivotAngle":0
+	}
+}
