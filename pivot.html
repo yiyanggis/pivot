@@ -178,6 +178,7 @@
 				  		</tr>
 				  		<tr>
 				  			<td><button type="button" class="btn btn-default" id="drawBtn">Draw On Map</button></td>
+				  			<td><button type="button" class="btn btn-default" id="editBtn">Edit Pivot</button></td>
 				  			<td><button type="button" class="btn btn-default" id="generateBtn">Generate</button></td>
 				  			<td><button type="button" class="hidden btn btn-default" id="modifyBtn">update</button></td>
 
@@ -303,7 +304,7 @@ var map=initmap('map');
 
 //var map2=initmap('map2');
 var mapStatus=null;
-var mapStatusMode={Draw:1,Identify:2,Null:null};
+var mapStatusMode={Draw:1,Identify:2,Edit:3,Null:null};
 
 var fieldLayer;
 
@@ -316,15 +317,20 @@ var center;
 var circle;
 
 var circleFeature;
+var centerFeature, perimeterFeature;
+
+var editLayer;
 
 var radius;
 
 var draw; // global so we can remove it later
+var edit;
 
 var circleVectorSource;
 
 var circleVectorLayer;
 
+//for draw & edit
 var features;
 var featureOverlay;
 

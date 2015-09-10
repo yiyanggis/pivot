@@ -104,12 +104,12 @@
 				  <div class="panel-body">
 				  	<table>
 				  		<tr>
-				  			<td>
+				  			<td style="display:none">
 				  				<span>Base Walk Speed (%)</span>
 				  				<input type="text" id="speedInput" readonly>
 				  			</td>
 
-				  			<td>
+				  			<td style="display:none">
 				  				<span>Lock</span>
 				  				<input type="checkbox" id="lockCheck" checked>
 				  			</td>
@@ -138,6 +138,29 @@
 		  <!-- Tab panes -->
 		  <div class="tab-content">
 		    <div role="tabpanel" class="tab-pane fade in active" id="Geographic_Footprint">
+		    	<div class="row">
+		    		<div class="btn-toolbar" style="margin: 10px;" role="toolbar" aria-label="...">
+					  <div class="btn-group" role="group" aria-label="...">
+					  	<div class="btn-group" role="group" aria-label="...">
+						  <button type="button" class="btn btn-default">Save</button>
+						  <button type="button" class="btn btn-default">Print</button>
+						  <div class="btn-group" role="group">
+						    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+						      Export
+						      <span class="caret"></span>
+						    </button>
+						    <ul class="dropdown-menu">
+						      <li><a href="#">Export as CSV</a></li>
+						      <li><a href="#">Export as JSON</a></li>
+						      <li><a href="#">Export as Shapefile</a></li>
+						    </ul>
+						  </div>
+						</div>
+					  </div>
+					  <div class="btn-group" role="group" aria-label="...">...</div>
+					  <div class="btn-group" role="group" aria-label="...">...</div>
+					</div>
+		    	</div>
 		    	<div class="row">
 				  <div class="col-md-6">
 				  	<div id="resultDiv" class="row" style="width: 100%;height: 600px;overflow-x: scroll;overflow-y:scroll">
@@ -274,6 +297,8 @@ var sectorSource;
 
 var sectorLayer;
 
+var sectorFeatures;
+
 var sectorDeg;
 
 var sectorArray=[];
@@ -283,6 +308,8 @@ var featureArray=[];
 var featureCollection;
 
 var t;
+
+var highlightLayer, highlightSource;
 
 //addInteraction();
 
@@ -312,8 +339,18 @@ $(document).ready(function(){
 	
 
 	map=initmap('map');
+
 	drawPivotCircle(map, radius, center[1],center[0]);
-	t = $('#resultTable').DataTable();
+
+	t = $('#resultTable').DataTable({
+		"lengthMenu": [[-1], ["All"]]
+	});
+
+	 $('#resultTable tbody').on( 'click', 'tr', function () {
+        $(this).toggleClass('selected');
+        highlightSource.addFeature(sectorFeatures[2]);
+        highlightSource.addFeature(sectorFeatures[5]);
+    } );
 });
 
 

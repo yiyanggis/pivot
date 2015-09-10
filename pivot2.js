@@ -801,6 +801,8 @@ $(document).ready(function(){
 		}
 		sectorSource=new ol.source.Vector();
 
+		sectorFeatures=[];
+
 		drawSectors(center,radius,sectorDeg);
 
 		var geojson = new ol.format.GeoJSON();
@@ -821,6 +823,23 @@ $(document).ready(function(){
 	    });
 
 		map.addLayer(sectorLayer);
+
+		highlightSource=new ol.source.Vector();
+
+		highlightLayer = new ol.layer.Vector({
+	        source: highlightSource,
+	        style: new ol.style.Style({
+			    fill: new ol.style.Fill({
+			      color: 'rgba(255, 255, 255, 0.2)'
+			    }),
+			    stroke: new ol.style.Stroke({
+			      color: 'yellow',
+			      width: 2
+			    })
+			})
+	    });
+
+		map.addLayer(highlightLayer);
 
 		//run clip
 
@@ -1052,6 +1071,7 @@ function drawSectors(center,radius,deg){
 
 		var sectorFeature=new ol.Feature(sector);
 
+		sectorFeatures.push(sectorFeature);
 		sectorSource.addFeature(sectorFeature);
 	}
 }

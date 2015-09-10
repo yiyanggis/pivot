@@ -4,6 +4,131 @@
 *
 */
 
+/**
+ * Define a namespace for the application.
+ */
+window.app = {};
+var app = window.app;
+
+/**
+ * @constructor
+ * @extends {ol.interaction.Pointer}
+ */
+app.Drag = function() {
+
+  ol.interaction.Pointer.call(this, {
+    handleDownEvent: app.Drag.prototype.handleDownEvent,
+    handleDragEvent: app.Drag.prototype.handleDragEvent,
+    handleMoveEvent: app.Drag.prototype.handleMoveEvent,
+    handleUpEvent: app.Drag.prototype.handleUpEvent
+  });
+
+  /**
+   * @type {ol.Pixel}
+   * @private
+   */
+  this.coordinate_ = null;
+
+  /**
+   * @type {string|undefined}
+   * @private
+   */
+  this.cursor_ = 'pointer';
+
+  /**
+   * @type {ol.Feature}
+   * @private
+   */
+  this.feature_ = null;
+
+  /**
+   * @type {string|undefined}
+   * @private
+   */
+  this.previousCursor_ = undefined;
+
+};
+ol.inherits(app.Drag, ol.interaction.Pointer);
+
+
+/**
+ * @param {ol.MapBrowserEvent} evt Map browser event.
+ * @return {boolean} `true` to start the drag sequence.
+ */
+app.Drag.prototype.handleDownEvent = function(evt) {
+  var map = evt.map;
+
+  var feature = map.forEachFeatureAtPixel(evt.pixel,
+      function(feature, layer) {
+        return feature;
+      });
+
+  if (feature) {
+    this.coordinate_ = evt.coordinate;
+    this.feature_ = feature;
+  }
+
+  return !!feature;
+};
+
+
+/**
+ * @param {ol.MapBrowserEvent} evt Map browser event.
+ */
+app.Drag.prototype.handleDragEvent = function(evt) {
+  var map = evt.map;
+
+  var feature = map.forEachFeatureAtPixel(evt.pixel,
+      function(feature, layer) {
+        return feature;
+      });
+
+  var deltaX = evt.coordinate[0] - this.coordinate_[0];
+  var deltaY = evt.coordinate[1] - this.coordinate_[1];
+
+  var geometry = /** @type {ol.geom.SimpleGeometry} */
+      (this.feature_.getGeometry());
+  geometry.translate(deltaX, deltaY);
+
+  this.coordinate_[0] = evt.coordinate[0];
+  this.coordinate_[1] = evt.coordinate[1];
+};
+
+
+/**
+ * @param {ol.MapBrowserEvent} evt Event.
+ */
+app.Drag.prototype.handleMoveEvent = function(evt) {
+  if (this.cursor_) {
+    var map = evt.map;
+    var feature = map.forEachFeatureAtPixel(evt.pixel,
+        function(feature, layer) {
+          return feature;
+        });
+    var element = evt.map.getTargetElement();
+    if (feature) {
+      if (element.style.cursor != this.cursor_) {
+        this.previousCursor_ = element.style.cursor;
+        element.style.cursor = this.cursor_;
+      }
+    } else if (this.previousCursor_ !== undefined) {
+      element.style.cursor = this.previousCursor_;
+      this.previousCursor_ = undefined;
+    }
+  }
+};
+
+
+/**
+ * @param {ol.MapBrowserEvent} evt Map browser event.
+ * @return {boolean} `false` to stop the drag sequence.
+ */
+app.Drag.prototype.handleUpEvent = function(evt) {
+  this.coordinate_ = null;
+  this.feature_ = null;
+  return false;
+};
+
 function GetURLParameter(sParam)
 
 {
@@ -105,6 +230,9 @@ var styleFunction = function(feature, resolution) {
 
 
 function addInteraction() {
+
+	edit=new app.Drag();
+
   var value = "Circle";
   if (value !== 'None') {
     draw = new ol.interaction.Draw({
@@ -287,6 +415,7 @@ function initmap(mapdiv){
 	
 
 	var map = new ol.Map({
+		//interactions: ol.interaction.defaults().extend([new app.Drag()]),
 	  controls: ol.control.defaults().extend([
 	    new ol.control.ScaleLine({
 	      units: 'feet'
@@ -759,6 +888,64 @@ $(document).ready(function(){
 			//$('.leaflet-container').css('cursor','-webkit-grab');
 			mapStatus=mapStatusMode.Null;
 			map.removeInteraction(draw);
+
+			map.on('click', displayFeatureInfo);
+		}
+		
+	});
+
+	$("#editBtn").click(function(){
+		$(this).toggleClass('btn-success')
+
+		//edit=ol.interaction.defaults().extend([new app.Drag()]);
+
+
+		if(mapStatus==null){
+			//$('.leaflet-container').css('cursor','help');
+			//var centerFeature, perimeterFeature;
+			var centerPoint = new ol.geom.Point(center);
+			centerFeature = new ol.Feature(centerPoint);
+
+			var r=(radius * ol.proj.METERS_PER_UNIT.ft)/ol.proj.METERS_PER_UNIT.degrees;
+			var perimeterPoint = new ol.geom.Point([center[0],center[1]+r]);
+			perimeterFeature = new ol.Feature(perimeterPoint);
+
+			var editSource = new ol.source.Vector({
+		        projection: 'EPSG:4326'
+		    });
+		    editSource.addFeature(centerFeature);
+		    editSource.addFeature(perimeterFeature);
+
+		    editLayer = new ol.layer.Vector({
+		        source: editSource,
+		        style: new ol.style.Style({
+				    fill: new ol.style.Fill({
+				      color: 'rgba(255, 255, 255, 0.2)'
+				    }),
+				    stroke: new ol.style.Stroke({
+				      color: 'Blue',
+				      width: 2
+				    }),
+				    image: new ol.style.Circle({
+				      radius: 4,
+				      fill: new ol.style.Fill({
+				        color: 'Blue'
+				    	})
+				    })
+				})
+		    });
+
+		    map.addLayer(editLayer);
+			
+			mapStatus=mapStatusMode.Edit;
+			map.addInteraction(edit);
+
+			map.un('click', displayFeatureInfo);
+		}
+		else if(mapStatus==mapStatusMode.Edit){
+			//$('.leaflet-container').css('cursor','-webkit-grab');
+			mapStatus=mapStatusMode.Null;
+			map.removeInteraction(edit);
 
 			map.on('click', displayFeatureInfo);
 		}
