@@ -86,9 +86,50 @@ app.Drag.prototype.handleDragEvent = function(evt) {
   var deltaX = evt.coordinate[0] - this.coordinate_[0];
   var deltaY = evt.coordinate[1] - this.coordinate_[1];
 
-  var geometry = /** @type {ol.geom.SimpleGeometry} */
-      (this.feature_.getGeometry());
-  geometry.translate(deltaX, deltaY);
+  
+
+  if(this.feature_==centerFeature){
+  	//move circle feature
+
+  	var geometry = /** @type {ol.geom.SimpleGeometry} */
+	    (this.feature_.getGeometry());
+	geometry.translate(deltaX, deltaY);
+
+	circleFeature.getGeometry().translate(deltaX,deltaY);
+	perimeterFeature.getGeometry().translate(deltaX,deltaY);
+
+	center=[evt.coordinate[0],evt.coordinate[1]];
+
+	//0916 update inputs
+	$("#lngInput").val(evt.coordinate[0]);
+	$("#latInput").val(evt.coordinate[1]);
+	//$("#wettedRadiusInput").val(radius);
+	//$("#pivotLenInput").val(radius);
+  }
+
+  if(this.feature_==perimeterFeature){
+  	//resize circle feature
+  	var geometry = /** @type {ol.geom.SimpleGeometry} */
+	    (this.feature_.getGeometry());
+	geometry.translate(deltaX, deltaY);
+
+	var r=Math.sqrt(Math.pow(evt.coordinate[0]-center[0],2)+Math.pow(evt.coordinate[1]-center[1],2));
+	circleFeature.getGeometry().setRadius(r);
+
+	radius=(r * ol.proj.METERS_PER_UNIT.degrees)/ol.proj.METERS_PER_UNIT.ft;
+
+	//0916 update inputs
+	//$("#lngInput").val(centerLng);
+	//$("#latInput").val(centerLat);
+	$("#wettedRadiusInput").val(radius);
+	$("#pivotLenInput").val(radius);
+  }
+
+  if(this.feature_==circleFeature){
+  	
+  }
+
+  
 
   this.coordinate_[0] = evt.coordinate[0];
   this.coordinate_[1] = evt.coordinate[1];
@@ -100,21 +141,22 @@ app.Drag.prototype.handleDragEvent = function(evt) {
  */
 app.Drag.prototype.handleMoveEvent = function(evt) {
   if (this.cursor_) {
-    var map = evt.map;
-    var feature = map.forEachFeatureAtPixel(evt.pixel,
-        function(feature, layer) {
-          return feature;
-        });
-    var element = evt.map.getTargetElement();
-    if (feature) {
-      if (element.style.cursor != this.cursor_) {
-        this.previousCursor_ = element.style.cursor;
-        element.style.cursor = this.cursor_;
-      }
-    } else if (this.previousCursor_ !== undefined) {
-      element.style.cursor = this.previousCursor_;
-      this.previousCursor_ = undefined;
-    }
+  	//console.log(evt.coordinate);
+    // var map = evt.map;
+    // var feature = map.forEachFeatureAtPixel(evt.pixel,
+    //     function(feature, layer) {
+    //       return feature;
+    //     });
+    // var element = evt.map.getTargetElement();
+    // if (feature) {
+    //   if (element.style.cursor != this.cursor_) {
+    //     this.previousCursor_ = element.style.cursor;
+    //     element.style.cursor = this.cursor_;
+    //   }
+    // } else if (this.previousCursor_ !== undefined) {
+    //   element.style.cursor = this.previousCursor_;
+    //   this.previousCursor_ = undefined;
+    // }
   }
 };
 
@@ -128,6 +170,7 @@ app.Drag.prototype.handleUpEvent = function(evt) {
   this.feature_ = null;
   return false;
 };
+
 
 function GetURLParameter(sParam)
 
@@ -248,6 +291,35 @@ function addInteraction() {
     	//update input parameter
 
     	var extent=feature.feature.getGeometry().getExtent();
+
+    	circleFeature=feature.feature;
+
+    	// Source and vector layer
+	    var vectorSource = new ol.source.Vector({
+	        projection: 'EPSG:4326'
+	    });
+	    vectorSource.addFeature(circleFeature);
+	    vectorLayer = new ol.layer.Vector({
+	        source: vectorSource,
+	        style: new ol.style.Style({
+			    fill: new ol.style.Fill({
+			      color: 'rgba(255, 255, 255, 0.2)'
+			    }),
+			    stroke: new ol.style.Stroke({
+			      color: 'yellow',
+			      width: 2
+			    }),
+			    image: new ol.style.Circle({
+			      radius: 7,
+			      fill: new ol.style.Fill({
+			        color: '#ffcc33'
+			      })
+			    })
+			})
+	    });
+
+	    map.addLayer(vectorLayer);
+
 
     	var centerLng=(extent[0]+extent[2])/2;
     	var centerLat=(extent[1]+extent[3])/2;
@@ -865,6 +937,8 @@ $(document).ready(function(){
 		pivotAngle=validateFloat("pivotAngleInput");
 		if(tempRadius>0&&lat!=null&&lng!=null&&pivotLen>0)
 		{
+			//
+			map.removeLayer(featureOverlay);
 			drawPivotCircle(map, tempRadius, lat,lng);
 			drawPivotLine(lat,lng,pivotLen,pivotAngle,pivotNorthAngle,tempRadius,accessRoadAngle);
 		}	
@@ -903,11 +977,11 @@ $(document).ready(function(){
 		if(mapStatus==null){
 			//$('.leaflet-container').css('cursor','help');
 			//var centerFeature, perimeterFeature;
-			var centerPoint = new ol.geom.Point(center);
+			centerPoint = new ol.geom.Point(center);
 			centerFeature = new ol.Feature(centerPoint);
 
 			var r=(radius * ol.proj.METERS_PER_UNIT.ft)/ol.proj.METERS_PER_UNIT.degrees;
-			var perimeterPoint = new ol.geom.Point([center[0],center[1]+r]);
+			perimeterPoint = new ol.geom.Point([center[0],center[1]+r]);
 			perimeterFeature = new ol.Feature(perimeterPoint);
 
 			var editSource = new ol.source.Vector({
@@ -946,6 +1020,7 @@ $(document).ready(function(){
 			//$('.leaflet-container').css('cursor','-webkit-grab');
 			mapStatus=mapStatusMode.Null;
 			map.removeInteraction(edit);
+			map.removeLayer(editLayer);
 
 			map.on('click', displayFeatureInfo);
 		}

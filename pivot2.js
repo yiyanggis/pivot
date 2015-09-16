@@ -669,6 +669,9 @@ $(document).ready(function(){
 		pivotAngle=validateFloat("pivotAngleInput");
 		if(tempRadius>0&&lat!=null&&lng!=null&&pivotLen>0)
 		{
+			//remove draw layer
+			map.remove(featureOverlay);
+
 			drawPivotCircle(map, tempRadius, lat,lng);
 			drawPivotLine(lat,lng,pivotLen,pivotAngle,pivotNorthAngle,tempRadius,accessRoadAngle);
 		}	
@@ -855,7 +858,8 @@ $(document).ready(function(){
 
 			$.ajax({
 			  method: "POST",
-			  url: "http://97.68.192.217:9000/pivot/pivot.php",
+			  url: "http://166.62.82.16/pivot/pivot.php",
+			  //url: "http://localhost/pivot/pivot.php",
 			  data: {"polygon":JSON.stringify(value.geometry)},
 			  async:true
 			})
@@ -923,6 +927,9 @@ $(document).ready(function(){
 			    var speed=baseSpeed*(baseAwc/awc);
 			    var depth=appDept*(awc/baseAwc);
 
+			    sector.speed=speed;
+			    sector.depth=depth;
+
 			    if(depth>appMax){
 			    	appMax=depth;
 			    	$("#appMaxInput").val(appMax.toFixed(2));
@@ -938,8 +945,8 @@ $(document).ready(function(){
 			    	
 
 			    t.row.add([index*sectorDeg,index*sectorDeg+sectorDeg,area.toFixed(2),
-			    	depth.toFixed(2),//application depth
-			    	speed.toFixed(2),//speed
+			    	"<input type='text' class='edit' value="+depth.toFixed(2)+"></input>",//application depth
+			    	"<span class='speed'>"+speed.toFixed(2)+"</span>",//speed
 			    	soil,//soil type
 			    	awc.toFixed(2),//awc
 			    	0,//field capacit
@@ -1074,6 +1081,91 @@ function drawSectors(center,radius,deg){
 		sectorFeatures.push(sectorFeature);
 		sectorSource.addFeature(sectorFeature);
 	}
+}
+
+function changeAppDepth(){
+	//console.log();
+
+	var v=$(this).val();
+
+	var depth=parseFloat(v);
+
+	var speed=ratioApp_Speed/depth;
+
+	var appdepthInputs=$('.edit');
+	var speedInputs=$('.speed');
+	$(appdepthInputs).each(function(index,value){
+		if(selectIDs[""+(index+1)]){
+			$(value).val(v);
+
+			sectorArray[index].speed=speed.toFixed(2);
+			sectorArray[index].depth=depth;
+
+			$(speedInputs[index]).text(speed.toFixed(2));
+		}
+	});
+}
+
+function exportToCsv(filename, rows) {
+    var processRow = function (row) {
+        var finalVal = '';
+        for (var j = 0; j < row.length; j++) {
+            var innerValue = row[j] === null ? '' : row[j].toString();
+            if (row[j] instanceof Date) {
+                innerValue = row[j].toLocaleString();
+            };
+
+            if(j==3){
+            	innerValue=$(row[j]).val();
+            }
+
+            if(j==4){
+            	innerValue=$(row[j]).text();
+            }
+
+            var result = innerValue.replace(/"/g, '""');
+            if (result.search(/("|,|\n)/g) >= 0)
+                result = '"' + result + '"';
+            if (j > 0)
+                finalVal += ',';
+            finalVal += result;
+        }
+        return finalVal + '\n';
+    };
+
+    var processSectors = function (row) {
+        var finalVal = '';
+        //csvFile+="Start, Stop, Area(ac), Application(Depth), Speed(%), Soil Type, AWC, Field Capacity, Wilting Point, Inches to Refill, Yield Goal, %Runoff\n";
+
+        finalVal+=""+row.index+","+(row.index+sectorDeg)+","+row.area+","+row.depth+","+row.speed+","+row.soil+","+row.awc+","+0+","+0+","+row.depth+","+row.yeildgoal+","+row.runoff+"\n";
+
+        return finalVal + '\n';
+    };
+
+    var csvFile = '';
+    //header
+    csvFile+="Start, Stop, Area(ac), Application(Depth), Speed(%), Soil Type, AWC, Field Capacity, Wilting Point, Inches to Refill, Yield Goal, %Runoff\n";
+
+    for (var i = 0; i < rows.length; i++) {
+        csvFile += processSectors(rows[i]);
+    }
+
+    var blob = new Blob([csvFile], { type: 'text/csv;charset=utf-8;' });
+    if (navigator.msSaveBlob) { // IE 10+
+        navigator.msSaveBlob(blob, filename);
+    } else {
+        var link = document.createElement("a");
+        if (link.download !== undefined) { // feature detection
+            // Browsers that support HTML5 download attribute
+            var url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    }
 }
 
 

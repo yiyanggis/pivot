@@ -150,8 +150,8 @@
 						      <span class="caret"></span>
 						    </button>
 						    <ul class="dropdown-menu">
-						      <li><a href="#">Export as CSV</a></li>
-						      <li><a href="#">Export as JSON</a></li>
+						      <li><a href="#" id="exportCSV">Export as CSV</a></li>
+						      <li><a href="#" id="exportJSON">Export as JSON</a></li>
 						      <li><a href="#">Export as Shapefile</a></li>
 						    </ul>
 						  </div>
@@ -324,6 +324,8 @@ var ratioSpeed_Time=2160;
 
 var baseSpeed,appDept,rotationTime;
 
+var selectIDs;
+
 $(document).ready(function(){
 	center=[parseFloat(YY.Util.GetURLParameter('lng')),parseFloat(YY.Util.GetURLParameter('lat'))];
 	radius=parseFloat(YY.Util.GetURLParameter('r'));
@@ -340,6 +342,8 @@ $(document).ready(function(){
 
 	map=initmap('map');
 
+	selectIDs={};
+
 	drawPivotCircle(map, radius, center[1],center[0]);
 
 	t = $('#resultTable').DataTable({
@@ -347,10 +351,35 @@ $(document).ready(function(){
 	});
 
 	 $('#resultTable tbody').on( 'click', 'tr', function () {
-        $(this).toggleClass('selected');
-        highlightSource.addFeature(sectorFeatures[2]);
-        highlightSource.addFeature(sectorFeatures[5]);
+        //$(this).toggleClass('selected');
+
+        if($(this).hasClass('selected')){
+        	$(this).toggleClass('selected');
+        	//$($(this).children()[1]).text()
+	        var id=parseInt($($(this).children()[1]).text())/sectorDeg;
+	        highlightSource.removeFeature(sectorFeatures[id]);
+
+	        delete selectIDs[""+id];
+	        $($($(this).children()[3]).children()[0]).off('change',changeAppDepth);
+	    }
+        else{
+        	$(this).toggleClass('selected');
+        	//$($(this).children()[1]).text()
+
+	        var id=parseInt($($(this).children()[1]).text())/sectorDeg;
+	        highlightSource.addFeature(sectorFeatures[id]);
+
+	        selectIDs[""+id]=id;
+	        $($($(this).children()[3]).children()[0]).on('change',changeAppDepth);
+        }
+        
+        //highlightSource.addFeature(sectorFeatures[5]);
     } );
+
+	$('#exportCSV').click(function(){
+		//exportToCsv("pivot.csv",t.rows().data());
+		exportToCsv("pivot.csv",sectorArray);
+	});
 });
 
 

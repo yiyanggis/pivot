@@ -1,7 +1,7 @@
 <?php
 
 //$servername = "64.90.178.5";
-$servername = "localhost";
+$servername = "166.62.82.16";
 $username = "postgres";
 $password = "postgres";
 $dbname="property";
@@ -46,7 +46,9 @@ $db_conn=pg_connect($connection_string) or die ("Could not connect to server\n")
  //$query = "SELECT ST_AsGeoJson(ST_Intersection(ST_GeomFromText('".$polygonStr1."',4326),ST_GeomFromText('".$polygonStr2."',4326)))";
 
 //$query="SELECT ST_AsGeoJson(ST_Intersection(ST_GeomFromGeoJSON('".$polygon1."'),ST_GeomFromGeoJSON('".$polygon2."')))";
-$query="SELECT yeildgoal, runoff, awc,soil, ST_Area(ST_Intersection(ST_GeomFromGeoJSON('".$polygon."'),public.mapunitpoly.geom)) from public.mapunitpoly where ST_Intersects(ST_GeomFromGeoJSON('".$polygon."'),public.mapunitpoly.geom);";
+
+//$query="SELECT yeildgoal, runoff, awc,soil, ST_Area(ST_Intersection(ST_GeomFromGeoJSON('".$polygon."'),public.mapunitpoly.geom)) from public.mapunitpoly where ST_Intersects(ST_GeomFromGeoJSON('".$polygon."'),public.mapunitpoly.geom);";
+$query="SELECT yeildgoal, runoff, awc,soil, ST_Area(ST_Intersection(ST_GeomFromGeoJSON('".$polygon."'),public.soil.geom)) from public.soil where ST_Intersects(ST_GeomFromGeoJSON('".$polygon."'),public.soil.geom);";
 
  //$query = "select * from mapunitpoly where "
  //echo "query:".$query;
